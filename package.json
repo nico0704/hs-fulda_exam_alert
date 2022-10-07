@@ -1,0 +1,19 @@
+{
+  "name": "hs-fulda_exam_alert",
+  "version": "1.0.0",
+  "description": "program whichs automatically logs in to horstl.hs-fulda.de and checks for new grades",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nico Schröder",
+  "license": "ISC",
+  "dependencies": {
+    "config": "^3.3.8",
+    "jsonfile": "^6.1.0",
+    "jssoup": "^0.0.15",
+    "node-html-parser": "^6.1.1",
+    "superagent": "^8.0.2",
+    "urllib": "^3.2.3"
+  }
+}
