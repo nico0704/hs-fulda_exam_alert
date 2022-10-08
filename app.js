@@ -1,16 +1,16 @@
 // Author: Nico Schröder
 // 07.10.2022
 
-const {resolve} = require('path');
-process.env.NODE_CONFIG_DIR = 'Whatever/your/path/is/config'; // -> Must be set in order for scheduled task to work
+process.env.NODE_CONFIG_DIR = "Whatever/your/path/is/config"; // -> Must be set in order for scheduled task to work
+
 const config = require("config");
-const path = config.get('path');
+const path = config.get("path");
 var HTMLParser = require("node-html-parser");
 var JSSoup = require("jssoup").default;
 const superagent = require("superagent").agent();
 const jsonfile = require("jsonfile");
-const { symlinkSync } = require('fs');
-const file = path + "/known_exams.json";
+const { symlinkSync } = require("fs");
+const file = path + "\\known_exams.json";
 
 //Init
 const user = config.get("user");
@@ -124,7 +124,6 @@ const hsf = async () => {
                 }
 
                 exams++;
-
                 // check if exam_nr already exists...
                 if (!exam_nrs.known_exam_nr.includes(obj.exam_nr)) {
                     console.log(
