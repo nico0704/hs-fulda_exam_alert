@@ -1,20 +1,16 @@
 // Author: Nico Schröder
 // 07.10.2022
 
-// TODO: 1. decode password because of special characters
-//       2. get path other than from config so it does not have to bet set manually in app.js
-//       3. starting schtasks.exe from run.bat
-
-process.env.NODE_CONFIG_DIR = 'Whatever/your/path/is/config'; // must be the set in order for the scheduled task to work
+const {resolve} = require('path');
+process.env.NODE_CONFIG_DIR = 'Whatever/your/path/is/config'; // -> Must be set in order for scheduled task to work
 const config = require("config");
-const path = config.get("path");
-
+const path = config.get('path');
 var HTMLParser = require("node-html-parser");
 var JSSoup = require("jssoup").default;
 const superagent = require("superagent").agent();
 const jsonfile = require("jsonfile");
+const { symlinkSync } = require('fs');
 const file = path + "/known_exams.json";
-
 
 //Init
 const user = config.get("user");
