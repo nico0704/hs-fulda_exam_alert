@@ -1,24 +1,30 @@
 // Author: Nico Schröder
 // 07.10.2022
 
-process.env.NODE_CONFIG_DIR = "Whatever/your/path/is/config"; // -> Must be set in order for scheduled task to work
+const { EmbedBuilder, WebhookClient } = require("discord.js");
 
+// !!!
+// You need to set the following 2 variables (path where this file is located & url of your webhook):
+const path = "whatever/your/path/is";
+const webhookClient = new WebhookClient({
+    url: "your/webhook/url",
+});
+// !!!
+
+process.env.NODE_CONFIG_DIR = path + "/config";
 const config = require("config");
-const path = config.get("path");
 var HTMLParser = require("node-html-parser");
 var JSSoup = require("jssoup").default;
 const superagent = require("superagent").agent();
 const jsonfile = require("jsonfile");
-const { symlinkSync } = require("fs");
-const file = path + "\\known_exams.json";
 
-//Init
+// Init
+const file = path + "\\known_exams.json";
 const user = config.get("user");
-const password = config.get("password"); // TODO: Password decodieren wegen Sonderzeichen
+const password = config.get("password");
 var asi = null;
 var exams = 0;
 var new_grades = 0;
-
 // read known exams from known_exams.json
 var exam_nrs;
 jsonfile.readFile(file, function (err, obj) {
@@ -126,11 +132,23 @@ const hsf = async () => {
                 exams++;
                 // check if exam_nr already exists...
                 if (!exam_nrs.known_exam_nr.includes(obj.exam_nr)) {
-                    console.log(
-                        "NOTIFICATION! -> New grade for exam discovered..."
-                    );
-                    console.log(obj);
-                    console.log("writing new entry... exam_nr: " + obj.exam_nr);
+                    // build message to send via discord
+                    let message = obj.title + " (" + obj.exam_nr + ")";
+                    if (obj.grade) {
+                        message += "\nNote: " + obj.grade;
+                    }
+
+                    //send Discord Notification via a webhook
+                    try {
+                        webhookClient.send({
+                            content: message,
+                            username: "hs-fulda_exam_alert",
+                        });
+                    } catch (error) {
+                        console.log(error);
+                    }
+
+                    console.log(obj + "\n");
                     new_grades++;
                     exam_nrs.known_exam_nr.push(obj.exam_nr);
                     jsonfile.writeFile(file, exam_nrs, function (err) {
