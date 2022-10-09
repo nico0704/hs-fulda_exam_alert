@@ -5,12 +5,16 @@ const { EmbedBuilder, WebhookClient } = require("discord.js");
 
 // !!!
 // You need to set the following 2 variables (path where this file is located & url of your webhook):
-const path = "whatever/your/path/is";
+const path = "Whatever/your/path/is";
 const webhookClient = new WebhookClient({
-    url: "your/webhook/url",
+    url: ""
 });
 // !!!
 
+if (path == "Whatever/your/path/is" || path == "") {
+    console.log("Please set the path variable.");
+    return;
+}
 process.env.NODE_CONFIG_DIR = path + "/config";
 const config = require("config");
 var HTMLParser = require("node-html-parser");
@@ -22,6 +26,13 @@ const jsonfile = require("jsonfile");
 const file = path + "\\known_exams.json";
 const user = config.get("user");
 const password = config.get("password");
+if (!user || !password) {
+    console.log("Password and/or username could not be extracted")
+    console.log(
+        "Please check if password and username (fd-Nr.) are set correctly in /config/default.json"
+    );
+    return;
+}
 var asi = null;
 var exams = 0;
 var new_grades = 0;
@@ -37,19 +48,26 @@ jsonfile.readFile(file, function (err, obj) {
 
 const hsf = async () => {
     console.log("logging in...");
-    let login = await superagent
-        .post(
-            "https://horstl.hs-fulda.de/qisserver/rds?state=user&type=1&category=auth.login"
-        )
-        .send({ asdf: user, fdsa: password })
-        .set("Content-Type", "application/x-www-form-urlencoded");
-    console.log(user + " succesfully logged in");
-
+    try {
+        var login = await superagent
+            .post(
+                "https://horstl.hs-fulda.de/qisserver/rds?state=user&type=1&category=auth.login"
+            )
+            .send({ asdf: user, fdsa: password })
+            .set("Content-Type", "application/x-www-form-urlencoded");
+    } catch (error) {
+        console.error(error);
+        return;
+    }
     // get asi
-    console.log("getting asi...");
-    let resultContainingAsi = await superagent.get(
-        "https://horstl.hs-fulda.de/qisserver/rds?state=redirect&sso=qisstu&myre=state%253Duser%2526type%253D0%2526htmlBodyOnly%253Dtrue%2526topitem%253Dfunctions%2526language%253Dde"
-    );
+    try {
+        var resultContainingAsi = await superagent.get(
+            "https://horstl.hs-fulda.de/qisserver/rds?state=redirect&sso=qisstu&myre=state%253Duser%2526type%253D0%2526htmlBodyOnly%253Dtrue%2526topitem%253Dfunctions%2526language%253Dde"
+        );
+    } catch (error) {
+        console.error(error);
+        return;
+    }
     let tag_a = new JSSoup(resultContainingAsi.text, false).findAll("a");
     var i = 0;
     while (tag_a[i]) {
@@ -61,18 +79,28 @@ const hsf = async () => {
         if (asi) break;
     }
     if (!asi) {
-        console.log("asi could not be extracted");
-        // Exit...
+        console.error("asi could not be extracted");
+        console.error(
+            "Please check if password and/or username (fd-Nr.) are set correctly in /config/default.json"
+        );
+        return;
     }
+    console.log(user + " succesfully logged in");
     console.log("asi succesfully extracted: " + asi);
 
     // get transcript_of_records
     console.log("getting transcript of records...");
-    let transcript_of_records_link = await superagent.get(
-        "https://qispos.hs-fulda.de/qisserver/rds?state=notenspiegelStudent&next=tree.vm&nextdir=qispos/notenspiegel/student&navigationPosition=functions%2CnotenspiegelStudent&breadcrumb=notenspiegel&topitem=functions&subitem=notenspiegelStudent&asi=" +
-            asi
-    );
-    console.log("transcript of records received\nnow parsing to get data...");
+    try {
+        var transcript_of_records_link = await superagent.get(
+            "https://qispos.hs-fulda.de/qisserver/rds?state=notenspiegelStudent&next=tree.vm&nextdir=qispos/notenspiegel/student&navigationPosition=functions%2CnotenspiegelStudent&breadcrumb=notenspiegel&topitem=functions&subitem=notenspiegelStudent&asi=" +
+                asi
+        );
+        console.log("transcript of records received");
+    } catch (error) {
+        console.error(error);
+        return;
+    }
+    console.log("now parsing to get data...");
     tag_a = new JSSoup(transcript_of_records_link.text, false).findAll("a");
     i = 0;
     while (tag_a[i]) {
@@ -81,9 +109,14 @@ const hsf = async () => {
             continue;
         }
         if (new URL(str).searchParams.get("amp;struct") == "auswahlBaum") {
-            let grades = await superagent.get(
-                new URL(str).href.replaceAll("&amp;", "&")
-            );
+            try {
+                var grades = await superagent.get(
+                    new URL(str).href.replaceAll("&amp;", "&")
+                );
+            } catch (error) {
+                console.error(error);
+                return;
+            }
             let transcript_of_records_tr = HTMLParser.parse(grades.text)
                 .querySelectorAll("table")[1]
                 .querySelectorAll("tr");
@@ -145,10 +178,10 @@ const hsf = async () => {
                             username: "hs-fulda_exam_alert",
                         });
                     } catch (error) {
-                        console.log(error);
+                        console.error(error);
                     }
 
-                    console.log(obj + "\n");
+                    console.log(obj);
                     new_grades++;
                     exam_nrs.known_exam_nr.push(obj.exam_nr);
                     jsonfile.writeFile(file, exam_nrs, function (err) {
