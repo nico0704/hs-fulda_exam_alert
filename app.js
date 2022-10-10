@@ -163,7 +163,7 @@ const hsf = async () => {
                 // check if exam_nr already exists...
                 if (!exam_nrs.known_exam_nr.includes(obj.exam_nr)) {
                     //send Discord Notification via a webhook if webhook url exists
-                    if (send_discord_message) {
+                    if (send_discord_message == true) {
                         var webhookClient = new WebhookClient({
                             url: config.get("webhook_url"),
                         });
