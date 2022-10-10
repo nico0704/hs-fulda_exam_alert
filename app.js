@@ -1,33 +1,25 @@
 // Author: Nico Schröder
 // 07.10.2022
 
-const { EmbedBuilder, WebhookClient } = require("discord.js");
-
-// !!!
-// You need to set the following 2 variables (path where this file is located & url of your webhook):
-const path = "Whatever/your/path/is";
-const webhookClient = new WebhookClient({
-    url: ""
-});
-// !!!
-
-if (path == "Whatever/your/path/is" || path == "") {
-    console.log("Please set the path variable.");
-    return;
-}
-process.env.NODE_CONFIG_DIR = path + "/config";
+const path = require("path");
+process.env.NODE_CONFIG_DIR = __dirname + "\\config";
 const config = require("config");
 var HTMLParser = require("node-html-parser");
 var JSSoup = require("jssoup").default;
 const superagent = require("superagent").agent();
 const jsonfile = require("jsonfile");
 
+const { EmbedBuilder, WebhookClient } = require("discord.js");
+const webhookClient = new WebhookClient({
+    url: "https://discord.com/api/webhooks/1028723573516411010/awUguMJurOD0ftiyPqCMvCc0JXqfU0EV-RjuGfUIfetLf782Z8-fZr2Eadb-KNPhEh7f",
+});
+
 // Init
-const file = path + "\\known_exams.json";
+const file = __dirname + "\\known_exams.json";
 const user = config.get("user");
 const password = config.get("password");
 if (!user || !password) {
-    console.log("Password and/or username could not be extracted")
+    console.log("Password and/or username could not be extracted");
     console.log(
         "Please check if password and username (fd-Nr.) are set correctly in /config/default.json"
     );

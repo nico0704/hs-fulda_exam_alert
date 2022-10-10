@@ -1,8 +1,7 @@
 @echo off
 set /p "USERNAME=Enter your username: "
 echo Your username is: %USERNAME%
-set /p "PASSWORD=Enter your password: "
-echo Your password is: %PASSWORD%
+for /f "usebackq tokens=*" %%p in (`powershell -Command "$pword = read-host 'Enter Password' -AsSecureString ; $BSTR=[System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($pword); [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)"`) do set password=%%p
 set /p "PATH_=Enter path where this file is located (Careful: Please use '/' instead of '\' !): "
 echo You entered this path: %PATH_%
 (echo={"user":"%USERNAME%", "password":"%PASSWORD%", "path":"%PATH_%"}) > config/default.json
