@@ -8,20 +8,25 @@ var HTMLParser = require("node-html-parser");
 var JSSoup = require("jssoup").default;
 const superagent = require("superagent").agent();
 const jsonfile = require("jsonfile");
-
 const { EmbedBuilder, WebhookClient } = require("discord.js");
-const webhookClient = new WebhookClient({
-    url: "https://discord.com/api/webhooks/1028723573516411010/awUguMJurOD0ftiyPqCMvCc0JXqfU0EV-RjuGfUIfetLf782Z8-fZr2Eadb-KNPhEh7f",
-});
+const send_discord_message = new Boolean(config.get("webhook_url"));
 
 // Init
 const file = __dirname + "\\known_exams.json";
 const user = config.get("user");
 const password = config.get("password");
+
+// checking user input
 if (!user || !password) {
     console.log("Password and/or username could not be extracted");
     console.log(
         "Please check if password and username (fd-Nr.) are set correctly in /config/default.json"
+    );
+    return;
+}
+if (password.includes("\ufffd")) {
+    console.log(
+        "It seems that your password has special characters that were not decoded properly.\nPlease check your password in /config/default.json."
     );
     return;
 }
@@ -157,22 +162,27 @@ const hsf = async () => {
                 exams++;
                 // check if exam_nr already exists...
                 if (!exam_nrs.known_exam_nr.includes(obj.exam_nr)) {
-                    // build message to send via discord
-                    let message = obj.title + " (" + obj.exam_nr + ")";
-                    if (obj.grade) {
-                        message += "\nNote: " + obj.grade;
-                    }
-
-                    //send Discord Notification via a webhook
-                    try {
-                        webhookClient.send({
-                            content: message,
-                            username: "hs-fulda_exam_alert",
+                    //send Discord Notification via a webhook if webhook url exists
+                    if (send_discord_message) {
+                        var webhookClient = new WebhookClient({
+                            url: config.get("webhook_url"),
                         });
-                    } catch (error) {
-                        console.error(error);
+                        // build message to send via discord
+                        let message = obj.title + " (" + obj.exam_nr + ")";
+                        if (obj.grade) {
+                            message += "\nNote: " + obj.grade;
+                        }
+                        // send the actual message
+                        try {
+                            webhookClient.send({
+                                content: message,
+                                username: "hs-fulda_exam_alert",
+                            });
+                        } catch (error) {
+                            console.error(error);
+                            return;
+                        }
                     }
-
                     console.log(obj);
                     new_grades++;
                     exam_nrs.known_exam_nr.push(obj.exam_nr);
